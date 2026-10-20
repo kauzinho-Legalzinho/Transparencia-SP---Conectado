@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transparência SP - Portal Integrado</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>TRANSPARÊNCIA <span>SP</span></h1>
+    </div>
+    <div class="user-info" id="header-user-info" style="display: none;">
+      <span class="user-badge" id="user-display">Usuário: -</span>
+      <button class="action-btn secondary" id="btn-nav-tecnico" style="padding: 5px 12px; font-size: 0.8rem; display: none;" onclick="switchView('tecnico-view')">Painel do Técnico</button>
+      <button class="action-btn secondary" id="btn-nav-gestor" style="padding: 5px 12px; font-size: 0.8rem; display: none;" onclick="switchView('gestor-view')">Painel do Gestor</button>
+      <button class="action-btn secondary" style="padding: 5px 12px; font-size: 0.8rem; background: #333;" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- PAINEL DE LOGIN UNIFICADO -->
+  <div id="login-view" class="view-panel active">
+    <div style="max-width: 400px; margin: 40px auto;">
+      <div class="card" style="border-left-color: var(--primary); text-align: center;">
+        <h2 style="color: var(--primary); margin-bottom: 10px;">Acesso ao Sistema</h2>
+        <p style="font-size: 0.85em; color: #666; margin-bottom: 20px;">Selecione seu perfil e informe suas credenciais</p>
+        
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label><strong>Perfil de Acesso:</strong></label>
+          <select id="login-role" onchange="atualizarDicaLogin()">
+            <option value="cidadao">Cidadão (Consulta de Protocolo)</option>
+            <option value="tecnico">Técnico Operacional</option>
+            <option value="gestor">Gestor / Atendente</option>
+          </select>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 12px;">
+          <label><strong>Usuário / CPF / RE:</strong></label>
+          <input type="text" id="login-user" value="ana.silva">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+          <label><strong>Senha:</strong></label>
+          <input type="password" id="login-pass" value="123456">
+        </div>
+
+        <p id="login-hint" style="font-size: 0.75rem; color: #666; margin-bottom: 15px;">Dica Cidadão: ana.silva | 123456</p>
+
+        <button class="action-btn" style="width: 100%; padding: 12px;" onclick="fazerLogin()">Entrar no Sistema</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISÃO CIDADÃO (EXCLUSIVO PARA CONSULTA) -->
+  <div id="cidadao-view" class="view-panel">
+    <div class="card">
+      <h2>Acompanhamento de Chamados</h2>
+      <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Consulte o andamento das solicitações vinculadas ao seu cadastro.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Seus Protocolos Ativos</h3>
+        <div id="cidadao-os-list"></div>
+      </div>
+
+      <div class="card" id="cidadao-detalhe" style="display: none;">
+        <h3>Detalhes do Protocolo <span id="c-proto"></span></h3>
+        <hr style="margin: 10px 0;">
+        <p><strong>Status:</strong> <span id="c-status"></span></p>
+        <p><strong>Serviço:</strong> <span id="c-servico"></span></p>
+        <p><strong>Endereço:</strong> <span id="c-endereco"></span></p>
+        <p><strong>Técnico Alocado:</strong> <span id="c-tecnico"></span></p>
+        <div style="background: #fdfbf7; border: 1px solid #e2d9cc; padding: 10px; margin-top: 10px; border-radius: 6px;">
+          <strong>Notas Técnicas da Unidade:</strong>
+          <p id="c-notas" style="font-size: 0.9rem; margin-top: 4px;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÁREA DO TÉCNICO OPERACIONAL -->
+  <div id="tecnico-view" class="view-panel">
+    <div class="card" style="border-left-color: var(--primary);">
+      <h2>Área Operacional do Técnico</h2>
+      <p style="font-size: 0.9em; color: #666;">Gerencie e atualize o parecer dos chamados sob sua responsabilidade.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Chamados Atribuídos</h3>
+        <div id="tecnico-os-list"></div>
+      </div>
+
+      <div class="card" id="tecnico-painel-edicao" style="display: none;">
+        <h3>Atualização de Campo - OS: <span id="t-proto-title"></span></h3>
+        <input type="hidden" id="t-os-id">
+
+        <p style="margin-top: 8px;"><strong>Solicitante:</strong> <span id="t-solicitante"></span></p>
+        <p><strong>Endereço:</strong> <span id="t-endereco"></span></p>
+        
+        <div style="background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 6px; margin: 10px 0;">
+          <strong style="color: #f57f17;">Orientação do Gestor:</strong>
+          <p id="t-orientacao-gestor" style="font-size: 0.85rem; margin-top: 2px;"></p>
+        </div>
+
+        <div>
+          <label><strong>Status da Execução:</strong></label>
+          <select id="t-status-select">
+            <option value="Pendente">Pendente</option>
+            <option value="Em Andamento">Em Andamento</option>
+            <option value="Concluido">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <label><strong>Parecer Técnico / Notas de Campo:</strong></label>
+          <textarea id="t-notas-input" rows="3"></textarea>
+        </div>
+
+        <button class="action-btn" style="width: 100%; margin-top: 15px; background: var(--secondary);" onclick="salvarAtualizacaoTecnico()">Salvar e Atualizar Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÁREA DO GESTOR / ATENDENTE (CADASTRA E EDITA OS CHAMADOS) -->
+  <div id="gestor-view" class="view-panel">
+    <div class="card" style="border-left-color: #333;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h2>Painel de Controle e Atendimento</h2>
+        <div>
+          <button class="action-btn" onclick="abrirModalNovoChamadoGestor()">+ Novo Chamado (Atendimento)</button>
+          <button class="action-btn secondary" onclick="abrirModalGerenciarTecnicos()">👥 Gerenciar Técnicos</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Todas as Ordens de Serviço</h3>
+        <div id="gestor-os-list"></div>
+      </div>
+
+      <div class="card" id="gestor-painel-edicao" style="display: none;">
+        <h3>Controle da OS: <span id="g-proto-title"></span></h3>
+        <input type="hidden" id="g-os-id">
+
+        <div style="margin-top: 10px;">
+          <label><strong>Prioridade:</strong></label>
+          <select id="g-prio-select">
+            <option value="Alta">Alta</option>
+            <option value="Media">Média</option>
+            <option value="Baixa">Baixa</option>
+          </select>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <label><strong>Status Geral:</strong></label>
+          <select id="g-status-select">
+            <option value="Pendente">Pendente</option>
+            <option value="Em Andamento">Em Andamento</option>
+            <option value="Concluido">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <label><strong>Atribuir Técnico Responsável:</strong></label>
+          <select id="g-tech-select"></select>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <label><strong>Diretrizes do Gestor (Notas Internas):</strong></label>
+          <textarea id="g-notas-input" rows="3"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="action-btn" style="flex: 1;" onclick="salvarEdicaoGestor()">Salvar Alterações</button>
+          <button class="action-btn danger" onclick="excluirChamadoGestor()">Excluir OS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL - CADASTRO DE CHAMADO (ATENDENTE / GESTOR) -->
+  <div id="modal-novo-chamado" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Registrar Novo Chamado (Atendimento)</h3>
+        <span class="close-btn" onclick="fecharModal('modal-novo-chamado')">&times;</span>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Usuário do Cidadão (Login):</label>
+        <input type="text" id="novo-cidadao-user" placeholder="Ex: ana.silva" value="ana.silva">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Nome do Solicitante:</label>
+        <input type="text" id="novo-solicitante-nome" placeholder="Ex: Ana Maria Silva" value="Ana Maria Silva">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Tipo de Serviço:</label>
+        <select id="novo-servico">
+          <option value="Vazamento na Calçada">Vazamento na Calçada</option>
+          <option value="Falta de Água">Falta de Água</option>
+          <option value="Baixa Pressão">Baixa Pressão</option>
+          <option value="Esgoto Entupido">Esgoto Entupido</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Endereço Completo:</label>
+        <input type="text" id="novo-endereco" placeholder="Rua, Número, Bairro">
+      </div>
+      <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="salvarNovoChamadoGestor()">Cadastrar Ordem de Serviço</button>
+    </div>
+  </div>
+
+  <!-- MODAL - GERENCIAR TÉCNICOS (GESTOR) -->
+  <div id="modal-tecnicos" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Cadastrar / Gerenciar Técnicos</h3>
+        <span class="close-btn" onclick="fecharModal('modal-tecnicos')">&times;</span>
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <input type="text" id="novo-tecnico-nome" placeholder="Nome do novo técnico">
+        <button class="action-btn" onclick="cadastrarTecnico()">Adicionar</button>
+      </div>
+      <h4>Técnicos Ativos:</h4>
+      <ul id="lista-tecnicos-modal" style="margin-top: 10px; padding-left: 20px;"></ul>
+    </div>
+  </div>
+
+  <!-- SDK oficial do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Arquivo de scripts da aplicação -->
+  <script src="script.js"></script>
+</body>
+</html>

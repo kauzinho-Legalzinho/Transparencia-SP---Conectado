@@ -28,17 +28,17 @@
         <p style="font-size: 0.85em; color: #666; margin-bottom: 20px;">Selecione seu perfil e informe suas credenciais</p>
         
         <div style="text-align: left; margin-bottom: 12px;">
+          <label><strong>E-mail / Usuário / CPF / RE:</strong></label>
+          <input type="text" id="login-user" value="ana.silva">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 12px;">
           <label><strong>Perfil de Acesso:</strong></label>
           <select id="login-role" onchange="atualizarDicaLogin()">
             <option value="cidadao">Cidadão (Consulta de Protocolo)</option>
             <option value="tecnico">Técnico Operacional</option>
             <option value="gestor">Gestor / Atendente</option>
           </select>
-        </div>
-
-        <div style="text-align: left; margin-bottom: 12px;">
-          <label><strong>Usuário / CPF / RE:</strong></label>
-          <input type="text" id="login-user" value="ana.silva">
         </div>
 
         <div style="text-align: left; margin-bottom: 20px;">

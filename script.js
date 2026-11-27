@@ -88,25 +88,69 @@ function atualizarDicaLogin() {
 async function fazerLogin() {
   const role = document.getElementById('login-role').value;
   const user = document.getElementById('login-user').value.trim();
+  const senhaDigitada = document.getElementById('login-pass').value;
 
-  if (!user) { alert('Informe o usuário'); return; }
+  if (!user) {
+    alert('Informe o usuário ou e-mail.');
+    return;
+  }
+
+  if (!senhaDigitada) {
+    alert('Informe a senha.');
+    return;
+  }
+
+  const identificador = user.toLowerCase();
+  const emailAlternativo = identificador.includes('@')
+    ? identificador
+    : `${identificador.replace(/\s+/g, '')}@email.com`;
+
+  const { data: candidatos, error } = await _supabase
+    .from('usuario')
+    .select('*')
+    .or(`email.eq.${identificador},email.eq.${emailAlternativo},nome.ilike.${user}`);
+
+  if (error) {
+    alert('Erro ao validar credenciais: ' + error.message);
+    return;
+  }
+
+  const contaEncontrada = (candidatos || []).find(u =>
+    (u.email && (u.email.toLowerCase() === identificador || u.email.toLowerCase() === emailAlternativo)) ||
+    (u.nome && u.nome.toLowerCase() === identificador)
+  ) || (candidatos && candidatos[0]);
+
+  if (!contaEncontrada) {
+    alert('Usuário não encontrado no banco de dados.');
+    return;
+  }
+
+  if (contaEncontrada.senha !== senhaDigitada) {
+    alert('Senha incorreta. Verifique os caracteres e tente novamente.');
+    return;
+  }
+
+  const perfilReal = contaEncontrada.perfil || role;
 
   usuarioAtual = {
+    id_usuario: contaEncontrada.id_usuario,
+    email: contaEncontrada.email,
     login: user,
-    role: role,
-    nome: role === 'cidadao' ? 'Ana Maria Silva' : (role === 'tecnico' ? 'Carlos Eduardo' : 'Atendimento Central')
+    role: perfilReal,
+    nome: contaEncontrada.nome
   };
 
   document.getElementById('header-user-info').style.display = 'flex';
-  document.getElementById('user-display').textContent = `${usuarioAtual.nome} (${role.toUpperCase()})`;
+  document.getElementById('user-display').textContent = `${usuarioAtual.nome} (${perfilReal.toUpperCase()})`;
 
   const btnTecnico = document.getElementById('btn-nav-tecnico');
   const btnGestor = document.getElementById('btn-nav-gestor');
 
-  btnTecnico.style.display = (role === 'tecnico' || role === 'gestor') ? 'inline-block' : 'none';
-  btnGestor.style.display = (role === 'gestor') ? 'inline-block' : 'none';
+  btnTecnico.style.display = (perfilReal === 'tecnico' || perfilReal === 'gestor') ? 'inline-block' : 'none';
+  btnGestor.style.display = (perfilReal === 'gestor') ? 'inline-block' : 'none';
 
-  switchView(`${role}-view`);
+  document.getElementById('cidadao-detalhe').style.display = 'none';
+  switchView(`${perfilReal}-view`);
   await renderizarPainel();
 }
 
@@ -127,14 +171,15 @@ function switchView(viewId) {
 async function renderizarPainel() {
   if (!usuarioAtual) return;
 
-  // 1. VISÃO CIDADÃO
+  // 1. VISÃO CIDADÃO (APENAS SOLICITAÇÕES DO USUÁRIO LOGADO)
   if (usuarioAtual.role === 'cidadao') {
     const lista = document.getElementById('cidadao-os-list');
     lista.innerHTML = '<p style="color:#777;">Carregando...</p>';
 
     const { data: chamados, error } = await _supabase
       .from('solicitacao')
-      .select('*');
+      .select('*')
+      .eq('id_usuario_solicitante', usuarioAtual.id_usuario);
 
     if (error) {
       console.error('Erro ao buscar chamados:', error);
@@ -144,7 +189,7 @@ async function renderizarPainel() {
 
     lista.innerHTML = '';
     if (!chamados || chamados.length === 0) {
-      lista.innerHTML = '<p style="color:#777; margin-top:10px;">Nenhum chamado encontrado.</p>';
+      lista.innerHTML = '<p style="color:#777; margin-top:10px;">Nenhuma solicitação encontrada para este cadastro.</p>';
       return;
     }
 
@@ -222,6 +267,7 @@ async function verDetalheCidadao(id) {
     .from('solicitacao')
     .select('*')
     .eq('id_solicitacao', id)
+    .eq('id_usuario_solicitante', usuarioAtual.id_usuario)
     .single();
 
   if (!os) return;
@@ -253,9 +299,10 @@ async function salvarNovoChamadoGestor() {
   const endereco = document.getElementById('novo-endereco').value;
   const nomeSolicitante = document.getElementById('novo-solicitante-nome').value.trim() || 'Cidadão';
   const loginCidadao = document.getElementById('novo-cidadao-user').value.trim() || 'ana.silva';
-  const emailCidadao = `${loginCidadao.toLowerCase().replace(/\s+/g, '')}@email.com`;
+  const emailCidadao = loginCidadao.includes('@')
+    ? loginCidadao.toLowerCase()
+    : `${loginCidadao.toLowerCase().replace(/\s+/g, '')}@email.com`;
 
-  // 1. Verifica se o usuário já existe na tabela "usuario"
   let { data: usuarioExistente } = await _supabase
     .from('usuario')
     .select('id_usuario')
@@ -264,7 +311,6 @@ async function salvarNovoChamadoGestor() {
 
   let idUsuario = usuarioExistente ? usuarioExistente.id_usuario : null;
 
-  // 2. Se não existir, cadastra-o automaticamente para satisfazer a chave estrangeira
   if (!idUsuario) {
     const { data: novoUsuario, error: errUser } = await _supabase
       .from('usuario')
@@ -287,7 +333,6 @@ async function salvarNovoChamadoGestor() {
     idUsuario = novoUsuario.id_usuario;
   }
 
-  // 3. Insere a solicitação vinculada ao ID válido do usuário
   const { error } = await _supabase.from('solicitacao').insert([
     {
       tipo_problema: tipoServico,

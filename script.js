@@ -10,6 +10,62 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let usuarioAtual = null;
 
 // =========================================================================
+// CADASTRO DE CLIENTE / CIDADÃO (SUPABASE INSERT)
+// =========================================================================
+function abrirModalCadastroCliente() {
+  document.getElementById('modal-cadastro-cliente').style.display = 'flex';
+}
+
+async function cadastrarCliente() {
+  const nome = document.getElementById('cad-cliente-nome').value.trim();
+  const email = document.getElementById('cad-cliente-email').value.trim().toLowerCase();
+  const senha = document.getElementById('cad-cliente-senha').value;
+
+  if (!nome || !email || !senha) {
+    alert('Preencha nome, e-mail e senha para cadastrar.');
+    return;
+  }
+
+  const { data: existente } = await _supabase
+    .from('usuario')
+    .select('id_usuario')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (existente) {
+    alert('Este e-mail já está cadastrado.');
+    return;
+  }
+
+  const { error } = await _supabase
+    .from('usuario')
+    .insert([
+      {
+        nome: nome,
+        email: email,
+        senha: senha,
+        perfil: 'cidadao',
+        senha_provisoria: false
+      }
+    ]);
+
+  if (error) {
+    alert('Erro ao cadastrar cliente: ' + error.message);
+    return;
+  }
+
+  document.getElementById('cad-cliente-nome').value = '';
+  document.getElementById('cad-cliente-email').value = '';
+  document.getElementById('cad-cliente-senha').value = '';
+  document.getElementById('login-role').value = 'cidadao';
+  document.getElementById('login-user').value = email;
+  document.getElementById('login-pass').value = senha;
+
+  fecharModal('modal-cadastro-cliente');
+  alert('Cadastro realizado com sucesso! Você já pode entrar com seu e-mail e senha.');
+}
+
+// =========================================================================
 // NAVEGAÇÃO E AUTENTICAÇÃO
 // =========================================================================
 function atualizarDicaLogin() {

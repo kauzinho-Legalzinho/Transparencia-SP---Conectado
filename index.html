@@ -49,7 +49,31 @@
         <p id="login-hint" style="font-size: 0.75rem; color: #666; margin-bottom: 15px;">Dica Cidadão: ana.silva | 123456</p>
 
         <button class="action-btn" style="width: 100%; padding: 12px;" onclick="fazerLogin()">Entrar no Sistema</button>
+        <button class="action-btn secondary" style="width: 100%; padding: 10px; margin-top: 10px;" onclick="abrirModalCadastroCliente()">Cadastrar Novo Cliente / Cidadão</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL - CADASTRO DE CLIENTE / CIDADÃO -->
+  <div id="modal-cadastro-cliente" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Cadastro de Cliente / Cidadão</h3>
+        <span class="close-btn" onclick="fecharModal('modal-cadastro-cliente')">&times;</span>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Nome Completo:</label>
+        <input type="text" id="cad-cliente-nome" placeholder="Ex: Maria Clara Souza">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>E-mail:</label>
+        <input type="email" id="cad-cliente-email" placeholder="Ex: maria.souza@email.com">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label>Senha:</label>
+        <input type="password" id="cad-cliente-senha" placeholder="Crie uma senha">
+      </div>
+      <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="cadastrarCliente()">Concluir Cadastro</button>
     </div>
   </div>
 
